@@ -26,17 +26,18 @@ def build_model(max_features, maxlen):
     return model
 
 def preprocessing(X,force=False):
-    VALID_FILE = "valid_chars.pkl"
-    valid_chars = ''
-    if force or (not os.path.isfile(VALID_FILE)):
+    Data_Feature_FILE = "dataFeature.pkl"
+    dataFeature = ''
+    if force or (not os.path.isfile(Data_Feature_FILE)):
         valid_chars = {x:idx+1 for idx, x in enumerate(set(''.join(X)))}
-        pickle.dump(valid_chars,open(VALID_FILE,"wb"))
+        max_features = len(valid_chars) + 1 #合法的字符数
+        maxlen = np.max([len(x) for x in X]) #最长的域名
+        pickle.dump((valid_chars,max_features,maxlen),open(Data_Feature_FILE,"wb"))
     else:
-        valid_chars = pickle.load(open(VALID_FILE,"rb+"))
-    print(valid_chars)
-
-    max_features = len(valid_chars) + 1 #合法的字符数
-    maxlen = np.max([len(x) for x in X]) #最长的域名
+        dataFeature = pickle.load(open(Data_Feature_FILE,"rb+"))
+    valid_chars,max_features,maxlen = dataFeature[0],dataFeature[1],dataFeature[2]
+    
+    # print(valid_chars,max_features,maxlen)
 
     X = [[valid_chars[y] for y in x]for x in X] # X每个元素是将域名映射字符与数字一一映射后的数组
     X = sequence.pad_sequences(X, maxlen=maxlen) # 将数组补齐至最长域名的长度
@@ -47,17 +48,17 @@ def preprocessing(X,force=False):
         11 23 16  9]
     '''
     # debug代码,打印x的信息
-    for i in range(1,10):
-        print(X[i],len(X[i]))
+    # for i in range(1,10):
+    #     print(X[i],len(X[i]))
 
-    exit()
-    return X
+    # exit()
+    return X,max_features,maxlen
 
 '''
     模型一次训练batch_size个数据
     模型将整个数据集训练max_epoch次
 '''
-def run(max_epoch=25, nfolds=10, batch_size=128,force=False):
+def run(max_epoch=256, nfolds=10, batch_size=4096,force=False):
     indata = data.get_data()
     indata = list(indata)
 
@@ -65,7 +66,7 @@ def run(max_epoch=25, nfolds=10, batch_size=128,force=False):
     X = [x[1] for x in indata] #域名
     labels = [x[0] for x in indata] #标签 
 
-    X = preprocessing(X,force)
+    X,max_features,maxlen = preprocessing(X,force)
 
     y = [0 if x == 'benign' else 1 for x in labels] #目前是个二分类的问题
 
@@ -115,8 +116,7 @@ def run(max_epoch=25, nfolds=10, batch_size=128,force=False):
     return final_data
 
 if __name__ == "__main__":
-    lstm_results = run(nfolds=10)
-    print(lstm_results)
+    lstm_results = run()
     results = {'lstm': lstm_results}
     RESULT_FILE = 'results.pkl'
     pickle.dump(results, open(RESULT_FILE, 'wb'))
