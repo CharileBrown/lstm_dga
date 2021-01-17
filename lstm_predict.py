@@ -4,6 +4,7 @@ from lstm_train import preprocessing
 import numpy as np
 import data
 from sklearn.model_selection import train_test_split
+import sklearn
 
 def predict(domain,model_path="model10.h5"):
     model_path = os.path.join("saved_model",model_path)
@@ -14,7 +15,7 @@ def predict(domain,model_path="model10.h5"):
     print(res)
 
 
-def run(force=False,model_path="model5.h5"):
+def run(force=False,model_path="model1.h5"):
     indata = data.get_data()
     indata = list(indata)
 
@@ -30,12 +31,9 @@ def run(force=False,model_path="model5.h5"):
     X_train, X_test, y_train, y_test, _, label_test = train_test_split(X, y, labels, test_size=0.2) #train_test_split分割并打乱数据集
     model_path = os.path.join("saved_model",model_path)
     model = keras.models.load_model(model_path)
-    res = model.predict_classes(X_test)
-    count = 0
-    for i in range(8600):
-        if res[i][0] == y_test[i]:
-            count+=1
-    print(count/8600)
+    res = model.predict(X_test)
+    res = [1 if x > 0.5 else 0 for x in res]
+    print(sklearn.metrics.accuracy_score(y_test, res))
 
 run()
-predict("ultraporader-conapefy-prolobeziless.info")
+# predict("ultraporader-conapefy-prolobeziless.info")

@@ -98,14 +98,13 @@ def run(max_epoch=256, nfolds=10, batch_size=4096,force=False):
                 best_iter = ep
 
                 probs = model.predict_proba(X_test)
-
-                tmp_probs = [1 if x > 0.5 else 0 for x in probs]
+                tmp_probs = [1 if x > 0.5 else 0 for x in probs]        
 
                 out_data = {'y':y_test, 'labels': label_test, 'probs':probs, 'epochs': ep,
-                            'confusion_martix': sklearn.metrics.confusion_matrix(y_test, tmp_probs)}
-                
-                
-                print(sklearn.metrics.confusion_matrix(y_test, tmp_probs)) 
+                            'confusion_martix': sklearn.metrics.confusion_matrix(y_test, tmp_probs),'accuracy_score':
+                            sklearn.metrics.accuracy_score(y_test, tmp_probs)}
+             
+                print(sklearn.metrics.confusion_matrix(y_test, tmp_probs),sklearn.metrics.accuracy_score(y_test, tmp_probs)) 
             else:
                 if(ep-best_iter) > 2:
                     break
@@ -116,7 +115,7 @@ def run(max_epoch=256, nfolds=10, batch_size=4096,force=False):
     return final_data
 
 if __name__ == "__main__":
-    lstm_results = run()
+    lstm_results = run(nfolds=1)
     results = {'lstm': lstm_results}
     RESULT_FILE = 'results.pkl'
     pickle.dump(results, open(RESULT_FILE, 'wb'))
