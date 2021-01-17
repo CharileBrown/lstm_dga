@@ -113,28 +113,45 @@ def gen_malicious(num_per_dga=10000):
 
     return domains, labels
 
-def gen_data(force=False):
-    """Grab all data for train/test and save
+# def gen_data(force=False):
+#     """Grab all data for train/test and save
 
-    force:If true overwrite, else skip if file
-          already exists
-    """
-    if force or (not os.path.isfile(DATA_FILE)):
-        domains, labels = gen_malicious(10000)
+#     force:If true overwrite, else skip if file
+#           already exists
+#     """
+#     if force or (not os.path.isfile(DATA_FILE)):
+#         domains, labels = gen_malicious(10000)
 
-        # Get equal number of benign/malicious
-        domains += get_alexa(len(domains))
-        labels += ['benign']*len(domains)
+#         # Get equal number of benign/malicious
+#         domains += get_alexa(len(domains))
+#         labels += ['benign']*len(domains)
         
-        print(labels)
+#         print(labels)
+#         pickle.dump(zip(labels, domains), open(DATA_FILE, 'wb'))
+
+# def get_data(force=False):
+#     """Returns data and labels"""
+#     gen_data(force)
+
+#     return pickle.load(open(DATA_FILE,"rb+"))
+def gen_data(force=False):
+    if force or (not os.path.isfile(DATA_FILE)):
+        dataset = open("data.csv","r")
+        domains = []
+        labels = []
+        while True:
+            line = dataset.readline().strip()
+            if not line:
+                break
+            args = line.split(",")
+            domains += [args[1]]
+            labels += [args[0]]
         pickle.dump(zip(labels, domains), open(DATA_FILE, 'wb'))
-
+    
 def get_data(force=False):
-    """Returns data and labels"""
     gen_data(force)
-
     return pickle.load(open(DATA_FILE,"rb+"))
 
 if __name__ == "__main__":
-    data = get_data(force=True)
-    print(data)
+		data = get_data(force=True)
+		print(list(data))
