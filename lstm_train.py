@@ -58,7 +58,7 @@ def preprocessing(X,force=False):
     模型一次训练batch_size个数据
     模型将整个数据集训练max_epoch次
 '''
-def run(max_epoch=256, nfolds=10, batch_size=4096,force=False):
+def run(max_epoch=100, nfolds=10, batch_size=128,force=False):
     indata = data.get_data()
     indata = list(indata)
 
@@ -72,15 +72,16 @@ def run(max_epoch=256, nfolds=10, batch_size=4096,force=False):
 
     final_data = []
 
+    best_test_auc = 0
     for fold in range(nfolds):
         print ("fold %u/%u" % (fold+1, nfolds))
-        X_train, X_test, y_train, y_test, _, label_test = train_test_split(X, y, labels, test_size=0.2) #train_test_split分割并打乱数据集
+        X_train, X_test, y_train, y_test, _, label_test = train_test_split(X, y, labels, test_size=0.1) #train_test_split分割并打乱数据集
 
         print ("Build model...")
         model = build_model(max_features, maxlen)
 
         print("Train...")
-        X_train, X_holdout, y_train, y_holdout = train_test_split(X_train, y_train, test_size=0.05) 
+        X_train, X_holdout, y_train, y_holdout = train_test_split(X_train, y_train, test_size=0.1) 
         best_iter = -1
         best_auc = 0.0
         out_data = {}
@@ -91,31 +92,34 @@ def run(max_epoch=256, nfolds=10, batch_size=4096,force=False):
             t_probs = model.predict_proba(X_holdout)
             t_auc = sklearn.metrics.roc_auc_score(y_holdout, t_probs)
         
-            print('Epoch %d: auc = %f (best=%f)' % (ep, t_auc, best_auc))
+            print('Epoch %d: auc = %f (best=%f) (global_best=%f)' % (ep, t_auc, best_auc,best_test_auc))
             
             if t_auc > best_auc:
                 best_auc = t_auc
                 best_iter = ep
 
                 probs = model.predict_proba(X_test)
-                tmp_probs = [1 if x > 0.5 else 0 for x in probs]        
+                tmp_probs = [1 if x > 0.5 else 0 for x in probs]       
 
-                out_data = {'y':y_test, 'labels': label_test, 'probs':probs, 'epochs': ep,
-                            'confusion_martix': sklearn.metrics.confusion_matrix(y_test, tmp_probs),'accuracy_score':
+                if sklearn.metrics.accuracy_score(y_test, tmp_probs) > best_test_auc:
+                    best_test_auc =  sklearn.metrics.accuracy_score(y_test, tmp_probs)
+
+                out_data = {'epochs': ep,'confusion_martix': sklearn.metrics.confusion_matrix(y_test, tmp_probs),'accuracy_score':
                             sklearn.metrics.accuracy_score(y_test, tmp_probs)}
              
                 print(sklearn.metrics.confusion_matrix(y_test, tmp_probs),sklearn.metrics.accuracy_score(y_test, tmp_probs)) 
-            else:
-                if(ep-best_iter) > 2:
-                    break
+            # else:
+            #     if(ep-best_iter) > 2:
+            #         break
 
             final_data.append(out_data)
         filename = "saved_model/model" + str(fold+1) + ".h5"
         model.save(filename)
+    print("The best result of test_data is {}.".format(best_test_auc))
     return final_data
 
 if __name__ == "__main__":
-    lstm_results = run(nfolds=1)
+    lstm_results = run(nfolds=10)
     results = {'lstm': lstm_results}
-    RESULT_FILE = 'results.pkl'
+    RESULT_FILE = 'lstm_results.pkl'
     pickle.dump(results, open(RESULT_FILE, 'wb'))
