@@ -33,7 +33,11 @@ def run(force=False,model_path="model1.h5"):
     model = keras.models.load_model(model_path)
     res = model.predict_proba(X_test)
     res = [1 if x > 0.5 else 0 for x in res]
-    print(sklearn.metrics.accuracy_score(y_test, res))
+    print("precision=",sklearn.metrics.precision_score(y_test,res))
+    print("recall=",sklearn.metrics.recall_score(y_test,res))
+    print("fl-score=",sklearn.metrics.f1_score(y_test,res))
+    print("accuracy=",sklearn.metrics.accuracy_score(y_test, res))
+    print("auc=",sklearn.metrics.roc_auc_score(y_test,res))
 
 run()
 # predict("eclinicalweb.com")

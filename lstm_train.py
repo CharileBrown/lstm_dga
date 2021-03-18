@@ -108,9 +108,9 @@ def run(max_epoch=100, nfolds=10, batch_size=128,force=False):
                             sklearn.metrics.accuracy_score(y_test, tmp_probs)}
              
                 print(sklearn.metrics.confusion_matrix(y_test, tmp_probs),sklearn.metrics.accuracy_score(y_test, tmp_probs)) 
-            # else:
-            #     if(ep-best_iter) > 2:
-            #         break
+            else:
+                if(ep-best_iter) > 4:
+                    break
 
             final_data.append(out_data)
         filename = "saved_model/model" + str(fold+1) + ".h5"
